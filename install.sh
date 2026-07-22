@@ -3,7 +3,7 @@
 # UNIQUE GUARD - Automated One-Click Installer
 # Author & Copyright: mr-unique
 # License: MIT
-# Website/Repo: https://github.com/mr-unique/UniqueGuard
+# Website/Repo: https://github.com/OG-Mahshook/UniqueGuard-
 # =====================================================================
 
 set -e

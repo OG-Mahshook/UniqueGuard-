@@ -1,6 +1,6 @@
 [Unit]
 Description=UniqueGuard VPS/VDS Firewall & Anti-DDoS Protection Service
-Documentation=https://github.com/mr-unique/UniqueGuard
+Documentation=https://github.com/OG-Mahshook/UniqueGuard-
 After=network.target network-online.target docker.service
 Wants=network-online.target
 

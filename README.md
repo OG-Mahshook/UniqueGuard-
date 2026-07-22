@@ -11,7 +11,7 @@
 
 Created from the ground up to be **100% compatible with Pterodactyl Game Panel**, Docker container networking, game servers, web apps, databases, and Linux hosting environments. **UNIQUE GUARD** defends your server against aggressive network floods, port scans, and brute-force attacks without interrupting Pterodactyl SFTP, Wings API, Docker bridges, or game allocations.
 
-> **Copyright (c) 2026 [mr-unique](https://github.com/mr-unique)** — Released under the MIT Open Source License.
+> **Copyright (c) 2026 [mr-unique](https://github.com/OG-Mahshook)** — Released under the MIT Open Source License.
 
 ---
 
@@ -119,7 +119,7 @@ wget -qO- https://raw.githubusercontent.com/OG-Mahshook/UniqueGuard-/main/instal
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/mr-unique/UniqueGuard.git /tmp/UniqueGuard
+git clone https://github.com/OG-Mahshook/UniqueGuard-.git /tmp/UniqueGuard
 
 # 2. Change directory
 cd /tmp/UniqueGuard
@@ -351,9 +351,9 @@ sudo bash uninstall.sh
 
 ## 👤 Author & Copyright
 
-**UNIQUE GUARD** is designed, created, and maintained by **[mr-unique](https://github.com/mr-unique)**.
+**UNIQUE GUARD** is designed, created, and maintained by **[mr-unique](https://github.com/OG-Mahshook)**.
 
-- **Author**: mr-unique
+- **Author**: mr-unique ([OG-Mahshook](https://github.com/OG-Mahshook))
 - **License**: MIT Open Source License
 - **Copyright**: Copyright (c) 2026 mr-unique. All rights reserved.
 
