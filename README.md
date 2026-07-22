@@ -1,49 +1,74 @@
-# 🛡️ UniqueGuard Firewall for VPS & VDS
+# 🛡️ UNIQUE GUARD Firewall for VPS & VDS
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Linux%20VPS%2FVDS-orange.svg)
 ![Pterodactyl](https://img.shields.io/badge/Pterodactyl-100%25%20Compatible-brightgreen.svg)
 ![Author](https://img.shields.io/badge/Author-mr--unique-purple.svg)
 ![Anti-DDoS](https://img.shields.io/badge/Anti--DDoS-Engineered-red.svg)
+![Build](https://img.shields.io/badge/Build-v1.2.0-success.svg)
 
-**UniqueGuard** is an open-source, high-performance, lightweight firewall and Anti-DDoS protection system built specifically for Virtual Private Servers (VPS) and Virtual Dedicated Servers (VDS).
+**UNIQUE GUARD** is an open-source, enterprise-grade, high-performance firewall and Anti-DDoS protection system designed specifically for Virtual Private Servers (VPS) and Virtual Dedicated Servers (VDS).
 
-Designed from the ground up to be **100% compatible with Pterodactyl Game Panel**, Docker container networking, and Linux VPS environments, UniqueGuard protects your server from network attacks without blocking Pterodactyl SFTP, Wings API, Docker bridges, or game allocations.
+Created from the ground up to be **100% compatible with Pterodactyl Game Panel**, Docker container networking, game servers, web apps, databases, and Linux hosting environments. **UNIQUE GUARD** defends your server against aggressive network floods, port scans, and brute-force attacks without interrupting Pterodactyl SFTP, Wings API, Docker bridges, or game allocations.
 
 > **Copyright (c) 2026 [mr-unique](https://github.com/mr-unique)** — Released under the MIT Open Source License.
 
 ---
 
+```text
+  _   _ _   _ ___ _____  _   _ _____    ____ _   _    _    ____  ____  
+ | | | | \ | |_ _|  _  || | | | ____|  / ___| | | |  / \  |  _ \|  _ \ 
+ | | | |  \| || || | | || | | |  _|   | |  _| | | | / _ \ | |_) | | | |
+ | |_| | |\  || || |_| || |_| | |___  | |_| | |_| |/ ___ \|  _ <| |_| |
+  \___/|_| \_|___|\____\_\___/|_____|  \____|\___//_/   \_\_| \_\____/ 
+        Advanced VPS/VDS Firewall & Pterodactyl Anti-DDoS Engine
 ```
-  _   _       _                      ____                    _
- | | | |_ __ (_) __ _ _   _  ___    / ___|_   _  __ _ _ __ _| |
- | | | | '_ \| |/ _` | | | |/ _ \  | |  _| | | |/ _` | '__/ _` |
- | |_| | | | | | (_| | |_| |  __/  | |_| | |_| | (_| | |  | (_| |
-  \___/|_| |_|_|\__, |\__,_|\___|   \____|\__,_|\__,_|_|   \__,_|
-                |___/
-        Advanced VPS/VDS Firewall & Anti-DDoS Protection Engine
-```
+
+---
+
+## 📚 Table of Contents
+
+- [🔥 Key Features](#-key-features)
+- [💻 Supported Operating Systems](#-supported-operating-systems)
+- [📥 Quick 1-Click Installation](#-quick-1-click-installation)
+- [🛠️ Manual Installation (Git Clone)](#️-manual-installation-git-clone)
+- [🦖 Pterodactyl Panel & Wings Setup Guide](#-pterodactyl-panel--wings-setup-guide)
+- [🎮 Complete Usage Guide & CLI Commands](#-complete-usage-guide--cli-commands)
+  - [1. Core Management Commands](#1-core-management-commands)
+  - [2. Port Management Commands](#2-port-management-commands)
+  - [3. IP Blacklisting & Whitelisting](#3-ip-blacklisting--whitelisting)
+  - [4. Service Profiles (`minecraft`, `rust`, `fivem`, `csgo`, `web`, `database`)](#4-service-profiles-minecraft-rust-fivem-csgo-web-database)
+  - [5. Live Attack & Connection Monitor](#5-live-attack--connection-monitor)
+  - [6. VPS Security Audit Tool](#6-vps-security-audit-tool)
+  - [7. Discord Webhook Attack Alerts](#7-discord-webhook-attack-alerts)
+  - [8. Rule Backup & Restore](#8-rule-backup--restore)
+- [⚙️ Configuration Reference (`uniqueguard.conf`)](#️-configuration-reference-uniqueguardconf)
+- [⚙️ Systemd Service Control](#️-systemd-service-control)
+- [🗑️ Uninstallation](#️-uninstallation)
+- [👤 Author & Copyright](#-author--copyright)
+- [📜 License](#-license)
 
 ---
 
 ## 🔥 Key Features
 
-- 🚀 **1-Click Installation**: Full setup in under 30 seconds with automatic dependency installation.
+- 🚀 **30-Second Automated Setup**: One-click install script automatically handles OS detection and package dependencies (`iptables`, `ipset`, `fail2ban`, `curl`).
 - 🦖 **100% Pterodactyl Panel & Wings Compatibility**:
   - Automatically preserves Docker bridges (`docker0`, `pterodactyl0`) and `DOCKER-USER` iptables chains.
-  - Never interrupts internal container routing or game server port forwarding.
+  - Never breaks internal container routing or game server port forwarding.
   - Whitelists Pterodactyl Web Panel (80/443), Wings API (8080), and Wings SFTP (2022).
-  - Auto-detects active container game allocations (Minecraft, CS:GO, Rust, FiveM, SA-MP, Palworld, etc.).
-- 🛡️ **Built-in Anti-DDoS & Hardening Engine**:
-  - **SYN Flood Protection**: Limits TCP SYN bursts to prevent connection exhaustion.
-  - **UDP Flood Mitigation**: Throttles high-frequency UDP attacks while allowing legitimate game traffic.
-  - **Ping / ICMP Flood Defense**: Prevents ICMP bandwidth choking.
-  - **Stealth Port Scan Defense**: Drops NULL, XMAS, FIN, and malformed TCP scan packets.
+  - Auto-detects active container game allocations (Minecraft, CS:GO, Rust, FiveM, SA-MP, Palworld, ARK, etc.).
+- 🛡️ **Anti-DDoS & Traffic Hardening Engine**:
+  - **TCP SYN Flood Mitigation**: Restricts TCP connection rate bursts to prevent server memory exhaustion.
+  - **UDP Flood Defense**: Rate-limits incoming UDP packet bursts while preserving legitimate game traffic.
+  - **Ping / ICMP Flood Defense**: Throttles ping requests to prevent bandwidth saturation.
+  - **Stealth Port Scan Defense**: Drops NULL scans, XMAS scans, SYN-FIN scans, and malformed TCP flags.
   - **Invalid Packet Filtering**: Automatically drops corrupted or out-of-state packets.
-  - **Connection Rate Limiting**: Restricts maximum concurrent connections per IP.
-- ⚡ **Interactive CLI (`uniqueguard`)**: Easy command line management for status, port rules, and IP blocking.
-- 🔒 **Fail2ban Integration**: Included custom filters for SSH brute-force defense and Pterodactyl Panel login protection.
-- 🔄 **Systemd Integration**: Runs automatically on system boot.
+  - **Connection Rate Limiting**: Enforces max concurrent TCP connections per IP.
+- 🎯 **Pre-built Service Profiles**: 1-click profiles for Minecraft, Rust, FiveM, SA-MP, CS:GO/CS2, Web Servers, and Databases.
+- 🔔 **Discord Webhook Alerts**: Real-time Discord notifications when attacks occur or IPs get blocked.
+- 📊 **Real-time Monitoring & Security Audits**: Built-in network dashboard (`uniqueguard monitor`) and vulnerability scanner (`uniqueguard audit`).
+- 🔒 **Fail2ban Integration**: Includes pre-configured jails for SSH brute-force defense and Pterodactyl Panel login defense.
 
 ---
 
@@ -59,7 +84,7 @@ Designed from the ground up to be **100% compatible with Pterodactyl Game Panel*
 
 ## 📥 Quick 1-Click Installation
 
-Run the following command as `root` on your VPS or VDS:
+Run the following one-line command as `root` on your VPS or VDS:
 
 ### Using `curl`:
 ```bash
@@ -75,10 +100,8 @@ wget -qO- https://raw.githubusercontent.com/mr-unique/UniqueGuard/main/install.s
 
 ## 🛠️ Manual Installation (Git Clone)
 
-If you prefer installing from the source repository:
-
 ```bash
-# 1. Clone the repository
+# 1. Clone repository
 git clone https://github.com/mr-unique/UniqueGuard.git /tmp/UniqueGuard
 
 # 2. Change directory
@@ -93,118 +116,218 @@ sudo bash install.sh
 
 ## 🦖 Pterodactyl Panel & Wings Setup Guide
 
-UniqueGuard includes a built-in interactive wizard specifically crafted for Pterodactyl nodes.
+**UNIQUE GUARD** provides a built-in wizard specifically designed for Pterodactyl nodes.
 
-To automatically configure UniqueGuard for your Pterodactyl installation:
+To automatically configure **UNIQUE GUARD** for your Pterodactyl node:
 
 ```bash
 sudo uniqueguard setup-pterodactyl
 ```
 
-### What `setup-pterodactyl` does automatically:
-1. **Whitelists Docker Interfaces**: Preserves network routing for `docker0` and `pterodactyl0`.
-2. **Hooks into `DOCKER-USER`**: Prevents iptables from breaking Docker container port mapping.
-3. **Opens Web & Node Ports**:
-   - `80/tcp` & `443/tcp`: Pterodactyl Web Panel & SSL
-   - `8080/tcp`: Pterodactyl Wings Daemon API
-   - `2022/tcp`: Pterodactyl Wings SFTP File Transfer
-4. **Auto-Detects Game Allocations**: Inspects running Docker game containers and opens allocated ports (TCP/UDP) automatically.
-5. **Configures Game Port Ranges**: Lets you set dynamic port ranges (e.g. `25565:25600`, `27015:27050`).
+### How UNIQUE GUARD protects Pterodactyl:
+1. **Preserves Docker Interfaces**: Keeps `docker0` and `pterodactyl0` open so containers can talk to Wings without connection timeouts.
+2. **Preserves `DOCKER-USER` Chain**: Ensures Docker's internal NAT rules remain intact.
+3. **Whitelists Core Ports**:
+   - `80/tcp` & `443/tcp`: Web Panel & SSL
+   - `8080/tcp`: Wings Daemon API
+   - `2022/tcp`: Wings SFTP File Transfer
+4. **Auto-Detects Container Allocations**: Scans active Docker containers and automatically opens their allocated game ports (TCP/UDP).
 
 ---
 
-## 🎮 Command Line Interface (CLI) Usage
+## 🎮 Complete Usage Guide & CLI Commands
 
-The `uniqueguard` CLI tool allows you to manage rules effortlessly.
+### 1. Core Management Commands
 
-### 1. View Firewall Status
+| Command | Description |
+| :--- | :--- |
+| `sudo uniqueguard start` | Start and apply all firewall and Anti-DDoS rules |
+| `sudo uniqueguard stop` | Stop firewall and restore open network policies |
+| `sudo uniqueguard reload` | Reload configuration and re-apply rules |
+| `sudo uniqueguard status` | Display active firewall status, statistics, and rules |
+| `sudo uniqueguard logs` | View recent dropped attack connection logs |
+| `sudo uniqueguard help` | Show CLI help menu |
+
+---
+
+### 2. Port Management Commands
+
+#### Allow a Specific Port:
 ```bash
-sudo uniqueguard status
-```
-
-### 2. Allow a Custom Port (TCP or UDP)
-```bash
-# Allow Minecraft Server Port (UDP/TCP)
+# Allow Minecraft Port (UDP & TCP)
 sudo uniqueguard allow 25565/tcp
 sudo uniqueguard allow 25565/udp
 
-# Allow Web Server Port
+# Allow Custom Web App Port
 sudo uniqueguard allow 8080/tcp
 ```
 
-### 3. Remove an Allowed Port Rule
+#### Deny / Remove an Allowed Port:
 ```bash
 sudo uniqueguard deny 8080/tcp
 ```
 
-### 4. Block an Attacking IP Address
+---
+
+### 3. IP Blacklisting & Whitelisting
+
+#### Block an Attacking IP Immediately:
 ```bash
 sudo uniqueguard block 192.168.1.100
 ```
 
-### 5. Unblock an IP Address
+#### Unblock an IP Address:
 ```bash
 sudo uniqueguard unblock 192.168.1.100
 ```
 
-### 6. View Dropped Attack Logs
+---
+
+### 4. Service Profiles (`minecraft`, `rust`, `fivem`, `csgo`, `web`, `database`)
+
+Apply pre-configured port rules for game servers or software stacks with a single command:
+
 ```bash
-sudo uniqueguard logs
+# Apply Minecraft Profile (25565/tcp, 25565/udp, 25575 RCON, 8123 Dynmap)
+sudo uniqueguard profile minecraft
+
+# Apply Rust Server Profile (28015/udp, 28016 RCON, 28082 App)
+sudo uniqueguard profile rust
+
+# Apply FiveM Server Profile (30120/tcp, 30120/udp, 40120 txAdmin)
+sudo uniqueguard profile fivem
+
+# Apply SA-MP Profile (7777/udp)
+sudo uniqueguard profile samp
+
+# Apply CS:GO / CS2 Profile (27015/tcp, 27015/udp, 27020 GOTV)
+sudo uniqueguard profile csgo
+
+# Apply Web Server Profile (80/tcp HTTP, 443/tcp HTTPS)
+sudo uniqueguard profile web
+
+# Apply Database Profile (3306 MySQL, 5432 Postgres, 6379 Redis)
+sudo uniqueguard profile database
 ```
 
-### 7. Restart / Reload Firewall
+---
+
+### 5. Live Attack & Connection Monitor
+
+Launch real-time packet throughput, top connecting IPs, and attack log monitor:
+
+```bash
+sudo uniqueguard monitor
+```
+
+---
+
+### 6. VPS Security Audit Tool
+
+Run a full security posture and hardening audit report on your VPS:
+
+```bash
+sudo uniqueguard audit
+```
+
+**Example Output:**
+```text
+=== UNIQUE GUARD VPS/VDS Security Audit Report ===
+
+  [✓] UNIQUE GUARD Firewall: Active (+30 pts)
+  [✓] Anti-DDoS Engine: Enabled (+20 pts)
+  [✓] Pterodactyl Container Isolation: Active (+20 pts)
+  [✓] Fail2ban SSH/Panel Defense: Active (+15 pts)
+  [✓] Default INPUT Policy: DROP (+15 pts)
+
+Final Security Audit Score: 100/100
+Status: EXCELLENT HARDENING
+```
+
+---
+
+### 7. Discord Webhook Attack Alerts
+
+Get instant notifications in your Discord channel whenever an IP is blocked or an attack is detected!
+
+1. Edit `/etc/uniqueguard/uniqueguard.conf`:
+```bash
+sudo nano /etc/uniqueguard/uniqueguard.conf
+```
+2. Update settings:
+```bash
+ENABLE_DISCORD_ALERTS="true"
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE"
+```
+3. Reload firewall:
 ```bash
 sudo uniqueguard reload
 ```
 
-### 8. Stop / Disable Firewall
+---
+
+### 8. Rule Backup & Restore
+
+#### Create Backup Archive:
 ```bash
-sudo uniqueguard stop
+sudo uniqueguard backup
+```
+
+#### Restore from Backup Archive:
+```bash
+sudo uniqueguard restore /var/backups/uniqueguard/uniqueguard_backup_20260722_120000.tar.gz
 ```
 
 ---
 
 ## ⚙️ Configuration Reference (`uniqueguard.conf`)
 
-The main configuration file is located at `/etc/uniqueguard/uniqueguard.conf`. You can edit it using `nano` or `vim`:
+Located at `/etc/uniqueguard/uniqueguard.conf`:
 
 ```bash
-sudo nano /etc/uniqueguard/uniqueguard.conf
-```
+# General Settings
+ENABLE_FIREWALL="true"
+DEFAULT_INPUT_POLICY="DROP"
 
-### Key Configuration Options:
+# Pterodactyl Node Mode
+PTERODACTYL_MODE="true"
+PTERODACTYL_WEB_PORTS="80,443"
+PTERODACTYL_WINGS_PORTS="8080,2022"
+DOCKER_INTERFACES="docker0 pterodactyl0"
+AUTO_DETECT_WINGS_ALLOCATIONS="true"
 
-| Setting | Default Value | Description |
-| :--- | :--- | :--- |
-| `ENABLE_FIREWALL` | `"true"` | Enable or disable the UniqueGuard firewall engine |
-| `PTERODACTYL_MODE` | `"true"` | Enables Pterodactyl & Docker bridge protection logic |
-| `PTERODACTYL_WEB_PORTS` | `"80,443"` | Pterodactyl Web Panel HTTP/HTTPS ports |
-| `PTERODACTYL_WINGS_PORTS` | `"8080,2022"` | Wings Daemon API and SFTP ports |
-| `TCP_IN` | `"22,80,443,8080,2022"` | Standard allowed TCP ports |
-| `UDP_PORT_RANGES` | `"25565:25600 27015:27050"` | Space-separated UDP game port ranges |
-| `ENABLE_ANTI_DDOS` | `"true"` | Enable Anti-DDoS flood mitigation |
-| `SYN_FLOOD_LIMIT` | `"25/s"` | Maximum allowed SYN connection requests per second |
-| `UDP_FLOOD_LIMIT` | `"60/s"` | Maximum allowed incoming UDP packet limit per second |
-| `MAX_CONN_PER_IP` | `"30"` | Max simultaneous TCP connections permitted per single IP |
-| `WHITELIST_IPS` | `"127.0.0.1 ::1"` | Space-separated list of whitelisted IPs |
-| `BLACKLIST_IPS` | `""` | Space-separated list of permanently blocked IPs |
+# Allowed Ports
+TCP_IN="22,80,443,8080,2022"
+UDP_IN=""
+UDP_PORT_RANGES="25565:25600 27015:27050 7777:7800"
 
-After modifying `/etc/uniqueguard/uniqueguard.conf`, reload the rules with:
-```bash
-sudo uniqueguard reload
+# Anti-DDoS Thresholds
+ENABLE_ANTI_DDOS="true"
+SYN_FLOOD_LIMIT="25/s"
+SYN_FLOOD_BURST="50"
+UDP_FLOOD_LIMIT="60/s"
+UDP_FLOOD_BURST="120"
+PING_LIMIT="5/s"
+MAX_CONN_PER_IP="30"
+
+# IP Lists
+WHITELIST_IPS="127.0.0.1 ::1"
+BLACKLIST_IPS=""
+
+# Discord Alerts
+ENABLE_DISCORD_ALERTS="false"
+DISCORD_WEBHOOK_URL=""
 ```
 
 ---
 
-## ⚙️ Systemd Service Commands
-
-UniqueGuard runs as a native systemd service (`uniqueguard.service`).
+## ⚙️ Systemd Service Control
 
 ```bash
 # Check service status
 sudo systemctl status uniqueguard
 
-# Enable auto-start on boot
+# Enable service on boot
 sudo systemctl enable uniqueguard
 
 # Restart service
@@ -215,7 +338,7 @@ sudo systemctl restart uniqueguard
 
 ## 🗑️ Uninstallation
 
-If you wish to cleanly uninstall UniqueGuard and restore your original iptables rules:
+To cleanly remove **UNIQUE GUARD** and restore standard open policies:
 
 ```bash
 sudo bash uninstall.sh
@@ -225,7 +348,7 @@ sudo bash uninstall.sh
 
 ## 👤 Author & Copyright
 
-**UniqueGuard** is designed, developed, and maintained by **[mr-unique](https://github.com/mr-unique)**.
+**UNIQUE GUARD** is designed, created, and maintained by **[mr-unique](https://github.com/mr-unique)**.
 
 - **Author**: mr-unique
 - **License**: MIT Open Source License

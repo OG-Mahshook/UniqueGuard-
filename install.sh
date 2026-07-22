@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# UniqueGuard - Automated One-Click Installer
+# UNIQUE GUARD - Automated One-Click Installer
 # Author & Copyright: mr-unique
 # License: MIT
 # Website/Repo: https://github.com/mr-unique/UniqueGuard
@@ -18,13 +18,12 @@ BOLD='\033[1m'
 
 print_header() {
     echo -e "${CYAN}${BOLD}"
-    echo '  _   _       _                      ____                    _'
-    echo ' | | | |_ __ (_) __ _ _   _  ___    / ___|_   _  __ _ _ __ _| |'
-    echo ' | | | | '\''_ \| |/ _` | | | |/ _ \  | |  _| | | |/ _` | '\''__|/ _` |'
-    echo ' | |_| | | | | | (_| | |_| |  __/  | |_| | |_| | (_| | |  | (_| |'
-    echo '  \___/|_| |_|_|\__, |\__,_|\___|   \____|\__,_|\__,_|_|   \__,_|'
-    echo '                |___/                                            '
-    echo -e "         ${YELLOW}One-Click Installation Wizard for VPS/VDS${NC}"
+    echo '  _   _ _   _ ___ _____  _   _ _____    ____ _   _    _    ____  ____  '
+    echo ' | | | | \ | |_ _|  _  || | | | ____|  / ___| | | |  / \  |  _ \|  _ \ '
+    echo ' | | | |  \| || || | | || | | |  _|   | |  _| | | | / _ \ | |_) | | | |'
+    echo ' | |_| | |\  || || |_| || |_| | |___  | |_| | |_| |/ ___ \|  _ <| |_| |'
+    echo '  \___/|_| \_|___|\____\_\___/|_____|  \____|\___//_/   \_\_| \_\____/ '
+    echo -e "         ${YELLOW}One-Click Installation Wizard for VPS & VDS${NC}"
     echo -e "            ${GREEN}Copyright (c) 2026 mr-unique${NC}\n"
 }
 
@@ -65,7 +64,7 @@ fi
 echo -e "${GREEN}  [✓] Dependencies installed successfully.${NC}"
 
 # 4. Copy Executable, Configuration & Systemd Files
-echo -e "${BLUE}[3/5] Installing UniqueGuard binaries & configurations...${NC}"
+echo -e "${BLUE}[3/5] Installing UNIQUE GUARD binaries & configurations...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p /etc/uniqueguard
@@ -93,18 +92,21 @@ echo -e "${BLUE}[4/5] Registering systemd service...${NC}"
 cp "${SCRIPT_DIR}/systemd/uniqueguard.service" /etc/systemd/system/uniqueguard.service
 systemctl daemon-reload
 systemctl enable uniqueguard.service &>/dev/null
-echo -e "  [+] UniqueGuard systemd service enabled for boot startup."
+echo -e "  [+] UNIQUE GUARD systemd service enabled for boot startup."
 
 # 6. Initial Activation
-echo -e "${BLUE}[5/5] Activating UniqueGuard Firewall...${NC}"
+echo -e "${BLUE}[5/5] Activating UNIQUE GUARD Firewall...${NC}"
 /usr/local/bin/uniqueguard start
 
 echo -e "\n${GREEN}${BOLD}========================================================================${NC}"
-echo -e "${GREEN}${BOLD}     UniqueGuard Firewall Installed Successfully! (by mr-unique)       ${NC}"
+echo -e "${GREEN}${BOLD}     UNIQUE GUARD Firewall Installed Successfully! (by mr-unique)      ${NC}"
 echo -e "${GREEN}${BOLD}========================================================================${NC}\n"
 echo -e "Quick Management Commands:"
 echo -e "  ${YELLOW}uniqueguard status${NC}           - View firewall status and active rules"
+echo -e "  ${YELLOW}uniqueguard profile minecraft${NC}- Apply pre-configured server profile"
 echo -e "  ${YELLOW}uniqueguard setup-pterodactyl${NC}- Run auto-configuration wizard for Pterodactyl"
-echo -e "  ${YELLOW}uniqueguard allow 25565/udp${NC}  - Allow game or application port"
+echo -e "  ${YELLOW}uniqueguard monitor${NC}          - Launch real-time network & attack dashboard"
+echo -e "  ${YELLOW}uniqueguard audit${NC}            - Run security posture audit report"
+echo -e "  ${YELLOW}uniqueguard allow 25565/udp${NC}  - Allow custom game/app port"
 echo -e "  ${YELLOW}uniqueguard block 1.2.3.4${NC}    - Block an attacking IP"
-echo -e "  ${YELLOW}uniqueguard help${NC}             - Show all commands\n"
+echo -e "  ${YELLOW}uniqueguard help${NC}             - Show all available commands\n"

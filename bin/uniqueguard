@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # =====================================================================
-# UniqueGuard - Advanced VPS/VDS Firewall & Anti-DDoS System
+# UNIQUE GUARD - Advanced VPS/VDS Firewall & Anti-DDoS Engine
 # Author & Copyright: mr-unique
 # License: MIT
-# Version: 1.0.0
+# Version: 1.2.0
 # =====================================================================
 
 CONFIG_FILE="/etc/uniqueguard/uniqueguard.conf"
@@ -18,27 +18,27 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
-# ASCII Art Logo
+# Crystal Clear ASCII Banner for UNIQUE GUARD
 print_banner() {
     echo -e "${CYAN}${BOLD}"
-    echo '  _   _       _                      ____                    _'
-    echo ' | | | |_ __ (_) __ _ _   _  ___    / ___|_   _  __ _ _ __ _| |'
-    echo ' | | | | '\''_ \| |/ _` | | | |/ _ \  | |  _| | | |/ _` | '\''__|/ _` |'
-    echo ' | |_| | | | | | (_| | |_| |  __/  | |_| | |_| | (_| | |  | (_| |'
-    echo '  \___/|_| |_|_|\__, |\__,_|\___|   \____|\__,_|\__,_|_|   \__,_|'
-    echo '                |___/                                            '
-    echo -e "       ${YELLOW}Advanced VPS/VDS Firewall & Anti-DDoS Engine${NC}"
-    echo -e "       ${GREEN}Copyright (c) 2026 mr-unique | Open Source${NC}\n"
+    echo '  _   _ _   _ ___ _____  _   _ _____    ____ _   _    _    ____  ____  '
+    echo ' | | | | \ | |_ _|  _  || | | | ____|  / ___| | | |  / \  |  _ \|  _ \ '
+    echo ' | | | |  \| || || | | || | | |  _|   | |  _| | | | / _ \ | |_) | | | |'
+    echo ' | |_| | |\  || || |_| || |_| | |___  | |_| | |_| |/ ___ \|  _ <| |_| |'
+    echo '  \___/|_| \_|___|\____\_\___/|_____|  \____|\___//_/   \_\_| \_\____/ '
+    echo -e "       ${YELLOW}Advanced VPS/VDS Firewall & Pterodactyl Anti-DDoS Shield${NC}"
+    echo -e "          ${GREEN}Copyright (c) 2026 mr-unique | Open Source (MIT)${NC}\n"
 }
 
 # Check Root Privileges
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        echo -e "${RED}[ERROR] UniqueGuard requires root privileges to manage firewall rules.${NC}"
-        echo -e "Please run with ${YELLOW}sudo uniqueguard ${NC}or as root user."
+        echo -e "${RED}[ERROR] UNIQUE GUARD requires root privileges.${NC}"
+        echo -e "Please run with ${YELLOW}sudo uniqueguard <command>${NC} or as root user."
         exit 1
     fi
 }
@@ -54,22 +54,47 @@ load_config() {
     fi
 }
 
-# Ensure iptables tool exists
+# Check Dependencies
 check_dependencies() {
     if ! command -v iptables &>/dev/null; then
-        echo -e "${RED}[ERROR] iptables is not installed. Installing iptables is required.${NC}"
+        echo -e "${RED}[ERROR] iptables is missing. Please install iptables.${NC}"
         exit 1
+    fi
+}
+
+# Send Discord Webhook Alert
+send_discord_alert() {
+    local title="$1"
+    local message="$2"
+    local color="${3:-15158332}" # Default Red
+
+    if [ "$ENABLE_DISCORD_ALERTS" = "true" ] && [ -n "$DISCORD_WEBHOOK_URL" ] && command -v curl &>/dev/null; then
+        local payload=$(cat <<EOF
+{
+  "embeds": [
+    {
+      "title": "🛡️ UNIQUE GUARD Alert: ${title}",
+      "description": "${message}",
+      "color": ${color},
+      "footer": {
+        "text": "UNIQUE GUARD Firewall by mr-unique"
+      },
+      "timestamp": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+    }
+  ]
+}
+EOF
+)
+        curl -s -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK_URL" &>/dev/null || true
     fi
 }
 
 # Setup Custom iptables Chains
 setup_chains() {
-    # Custom chains for UniqueGuard
     iptables -N UG_INPUT 2>/dev/null || iptables -F UG_INPUT
     iptables -N UG_DDOS 2>/dev/null || iptables -F UG_DDOS
     iptables -N UG_LOG 2>/dev/null || iptables -F UG_LOG
 
-    # Link UG_INPUT chain to INPUT if not linked
     if ! iptables -C INPUT -j UG_INPUT 2>/dev/null; then
         iptables -I INPUT 1 -j UG_INPUT
     fi
@@ -82,44 +107,39 @@ start_firewall() {
     load_config
     check_dependencies
 
-    echo -e "${BLUE}[*] Initializing UniqueGuard Firewall Rules...${NC}"
+    echo -e "${BLUE}[*] Initializing UNIQUE GUARD Firewall Engine...${NC}"
 
     # Set Default Policies safely
     iptables -P INPUT ACCEPT
     iptables -P FORWARD ACCEPT
     iptables -P OUTPUT ACCEPT
 
-    # Flush custom chain
+    # Flush & Setup Custom Chain
     setup_chains
 
-    # 1. Allow Loopback Interface (localhost)
+    # 1. Allow Loopback (localhost)
     iptables -A UG_INPUT -i lo -j ACCEPT
 
     # 2. Allow Established and Related Connections
     iptables -A UG_INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-    # 3. Drop Invalid Packets if enabled
+    # 3. Drop Invalid Packets
     if [ "$DROP_INVALID_PACKETS" = "true" ]; then
-        echo -e "${YELLOW}  [+] Enabling Invalid Packet Filtering...${NC}"
+        echo -e "${YELLOW}  [+] Enabling Invalid Connection Filtering...${NC}"
         iptables -A UG_INPUT -m conntrack --ctstate INVALID -j DROP
     fi
 
     # 4. Stealth Scan & Malformed TCP Packet Protection
     if [ "$DROP_STEALTH_SCANS" = "true" ]; then
-        echo -e "${YELLOW}  [+] Enabling Stealth Scan & Malformed TCP Protection...${NC}"
-        # Drop NULL Scans
+        echo -e "${YELLOW}  [+] Enabling Stealth Scan & Malformed TCP Drop Rules...${NC}"
         iptables -A UG_INPUT -p tcp --tcp-flags ALL NONE -j DROP
-        # Drop XMAS Scans
         iptables -A UG_INPUT -p tcp --tcp-flags ALL ALL -j DROP
-        # Drop SYN-FIN Scans
         iptables -A UG_INPUT -p tcp --tcp-flags ALL SYN,FIN -j DROP
-        # Drop FIN Scans
         iptables -A UG_INPUT -p tcp --tcp-flags ALL FIN -j DROP
-        # Drop SYN-RST
         iptables -A UG_INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
     fi
 
-    # 5. Apply Whitelist IPs
+    # 5. Apply Whitelisted IPs
     if [ -n "$WHITELIST_IPS" ]; then
         echo -e "${YELLOW}  [+] Applying Whitelisted IPs...${NC}"
         for ip in $WHITELIST_IPS; do
@@ -127,7 +147,19 @@ start_firewall() {
         done
     fi
 
-    # 6. Apply Blacklist IPs
+    # 6. Apply Dynamic Hostname Whitelist
+    if [ -n "$WHITELIST_HOSTNAMES" ]; then
+        echo -e "${YELLOW}  [+] Resolving Hostname Whitelists...${NC}"
+        for host in $WHITELIST_HOSTNAMES; do
+            resolved_ip=$(getent ahosts "$host" | awk '{print $1}' | head -n 1)
+            if [ -n "$resolved_ip" ]; then
+                echo -e "      - Whitelisted host ${GREEN}$host${NC} ($resolved_ip)"
+                iptables -A UG_INPUT -s "$resolved_ip" -j ACCEPT
+            fi
+        done
+    fi
+
+    # 7. Apply Blacklisted IPs
     if [ -n "$BLACKLIST_IPS" ]; then
         echo -e "${YELLOW}  [+] Applying Blacklisted IPs...${NC}"
         for ip in $BLACKLIST_IPS; do
@@ -135,17 +167,17 @@ start_firewall() {
         done
     fi
 
-    # 7. Anti-DDoS Mitigations
+    # 8. Anti-DDoS Mitigations
     if [ "$ENABLE_ANTI_DDOS" = "true" ]; then
-        echo -e "${YELLOW}  [+] Configuring Anti-DDoS Mitigations...${NC}"
+        echo -e "${YELLOW}  [+] Applying Anti-DDoS Defenses...${NC}"
 
-        # SYN Flood Defense
+        # TCP SYN Flood Defense
         if [ "$SYN_FLOOD_PROTECTION" = "true" ]; then
             iptables -A UG_INPUT -p tcp --syn -m limit --limit "${SYN_FLOOD_LIMIT:-25/s}" --limit-burst "${SYN_FLOOD_BURST:-50}" -j ACCEPT
             iptables -A UG_INPUT -p tcp --syn -j DROP
         fi
 
-        # UDP Flood Defense (Rate limit incoming UDP bursts while allowing game ports)
+        # UDP Flood Mitigation
         if [ "$UDP_FLOOD_PROTECTION" = "true" ]; then
             iptables -A UG_INPUT -p udp -m limit --limit "${UDP_FLOOD_LIMIT:-60/s}" --limit-burst "${UDP_FLOOD_BURST:-120}" -j ACCEPT
         fi
@@ -162,23 +194,23 @@ start_firewall() {
         fi
     fi
 
-    # 8. Pterodactyl Panel & Wings Compatibility Engine
+    # 9. Pterodactyl Panel & Wings Integration
     if [ "$PTERODACTYL_MODE" = "true" ]; then
-        echo -e "${CYAN}  [+] Pterodactyl Engine Activated:${NC}"
+        echo -e "${CYAN}  [+] Pterodactyl Auto-Shield Engine Active:${NC}"
         
         # Preserve Docker Interfaces
         for dev in $DOCKER_INTERFACES; do
             if ip link show "$dev" &>/dev/null; then
-                echo -e "      - Whitelisting Docker Interface: ${GREEN}$dev${NC}"
+                echo -e "      - Preserving Docker Interface: ${GREEN}$dev${NC}"
                 iptables -A UG_INPUT -i "$dev" -j ACCEPT
                 iptables -A FORWARD -i "$dev" -j ACCEPT
                 iptables -A FORWARD -o "$dev" -j ACCEPT
             fi
         done
 
-        # Hook into DOCKER-USER chain if Docker is installed
+        # Hook into DOCKER-USER chain
         if iptables -L DOCKER-USER -n &>/dev/null; then
-            echo -e "      - Preserving ${GREEN}DOCKER-USER${NC} chain for container port mappings"
+            echo -e "      - Preserving ${GREEN}DOCKER-USER${NC} container mapping chain"
             if ! iptables -C DOCKER-USER -j RETURN 2>/dev/null; then
                 iptables -A DOCKER-USER -j RETURN
             fi
@@ -198,9 +230,9 @@ start_firewall() {
             [ -n "$port" ] && iptables -A UG_INPUT -p udp --dport "$port" -j ACCEPT
         done
 
-        # Auto-detect active Docker bindings (Game allocations)
+        # Auto-detect running game containers
         if [ "$AUTO_DETECT_WINGS_ALLOCATIONS" = "true" ] && command -v docker &>/dev/null; then
-            echo -e "      - Auto-detecting active Pterodactyl container allocations..."
+            echo -e "      - Auto-detecting active container game allocations..."
             ALLOC_PORTS=$(docker ps --format "{{.Ports}}" 2>/dev/null | grep -oP '\d+(?=->)' | sort -u)
             for p in $ALLOC_PORTS; do
                 if [ -n "$p" ]; then
@@ -211,7 +243,7 @@ start_firewall() {
         fi
     fi
 
-    # 9. Open Standard Configured Ports (TCP_IN & UDP_IN)
+    # 10. Open Configured Ports (TCP_IN & UDP_IN)
     if [ -n "$TCP_IN" ]; then
         echo -e "${YELLOW}  [+] Opening Standard TCP Ports: $TCP_IN...${NC}"
         IFS=',' read -ra T_PORTS <<< "$TCP_IN"
@@ -230,7 +262,7 @@ start_firewall() {
         done
     fi
 
-    # 10. Open Port Ranges
+    # 11. Open Port Ranges
     if [ -n "$TCP_PORT_RANGES" ]; then
         echo -e "${YELLOW}  [+] Opening TCP Port Ranges: $TCP_PORT_RANGES...${NC}"
         for range in $TCP_PORT_RANGES; do
@@ -245,36 +277,32 @@ start_firewall() {
         done
     fi
 
-    # 11. Logging Dropped Packets
+    # 12. Logging Dropped Packets
     if [ "$ENABLE_LOGGING" = "true" ]; then
-        iptables -A UG_INPUT -m limit --limit "${LOG_LIMIT:-5/m}" -j LOG --log-prefix "${LOG_PREFIX:-[UniqueGuard-DROP] }" --log-level 4
+        iptables -A UG_INPUT -m limit --limit "${LOG_LIMIT:-5/m}" -j LOG --log-prefix "${LOG_PREFIX:-[UNIQUE-GUARD-DROP] }" --log-level 4
     fi
 
-    # 12. Set Final Default Policy for INPUT
+    # 13. Set Final Default Policy
     if [ "$DEFAULT_INPUT_POLICY" = "DROP" ]; then
         iptables -A UG_INPUT -j DROP
     fi
 
-    # Save Rules persistently if netfilter-persistent or iptables-save is present
     save_rules
-
-    echo -e "${GREEN}${BOLD}[SUCCESS] UniqueGuard Firewall is active & protecting your server!${NC}\n"
+    echo -e "${GREEN}${BOLD}[SUCCESS] UNIQUE GUARD is active & protecting your server!${NC}\n"
+    send_discord_alert "Firewall Started" "UNIQUE GUARD Firewall rules applied successfully." "3066993"
 }
 
 # Stop Firewall
 stop_firewall() {
     check_root
-    echo -e "${YELLOW}[*] Stopping UniqueGuard Firewall and restoring open policies...${NC}"
+    echo -e "${YELLOW}[*] Stopping UNIQUE GUARD Firewall and restoring open policies...${NC}"
 
-    # Reset default policies to ACCEPT
     iptables -P INPUT ACCEPT
     iptables -P FORWARD ACCEPT
     iptables -P OUTPUT ACCEPT
 
-    # Remove UG_INPUT jump from INPUT chain
     iptables -D INPUT -j UG_INPUT 2>/dev/null
 
-    # Flush custom chains
     iptables -F UG_INPUT 2>/dev/null
     iptables -X UG_INPUT 2>/dev/null
     iptables -F UG_DDOS 2>/dev/null
@@ -283,10 +311,11 @@ stop_firewall() {
     iptables -X UG_LOG 2>/dev/null
 
     save_rules
-    echo -e "${RED}[STATUS] UniqueGuard Firewall has been stopped.${NC}"
+    echo -e "${RED}[STATUS] UNIQUE GUARD Firewall stopped.${NC}"
+    send_discord_alert "Firewall Stopped" "UNIQUE GUARD Firewall has been deactivated!" "15158332"
 }
 
-# Save rules to persistent storage across reboots
+# Save rules
 save_rules() {
     if command -v netfilter-persistent &>/dev/null; then
         netfilter-persistent save &>/dev/null
@@ -297,12 +326,12 @@ save_rules() {
     fi
 }
 
-# Show Current Status
+# Show Status
 show_status() {
     print_banner
     load_config
 
-    echo -e "${BOLD}=== UniqueGuard Firewall Status ===${NC}"
+    echo -e "${BOLD}=== UNIQUE GUARD Firewall Status ===${NC}"
     if iptables -C INPUT -j UG_INPUT 2>/dev/null; then
         echo -e "Status: ${GREEN}${BOLD}ACTIVE (PROTECTED)${NC}"
     else
@@ -310,20 +339,21 @@ show_status() {
     fi
 
     echo -e "\n${BOLD}Configuration Summary:${NC}"
-    echo -e "  - Anti-DDoS Defense: ${CYAN}${ENABLE_ANTI_DDOS:-false}${NC}"
-    echo -e "  - Pterodactyl Mode:  ${CYAN}${PTERODACTYL_MODE:-false}${NC}"
-    echo -e "  - Allowed TCP Ports: ${GREEN}${TCP_IN:-None}${NC}"
-    echo -e "  - Allowed UDP Ports: ${GREEN}${UDP_IN:-None}${NC}"
-    echo -e "  - UDP Port Ranges:  ${GREEN}${UDP_PORT_RANGES:-None}${NC}"
-    echo -e "  - Whitelisted IPs:  ${YELLOW}${WHITELIST_IPS:-None}${NC}"
-    echo -e "  - Blacklisted IPs:  ${RED}${BLACKLIST_IPS:-None}${NC}"
+    echo -e "  - Anti-DDoS Engine:     ${CYAN}${ENABLE_ANTI_DDOS:-false}${NC}"
+    echo -e "  - Pterodactyl Mode:     ${CYAN}${PTERODACTYL_MODE:-false}${NC}"
+    echo -e "  - Discord Alerts:       ${CYAN}${ENABLE_DISCORD_ALERTS:-false}${NC}"
+    echo -e "  - Allowed TCP Ports:    ${GREEN}${TCP_IN:-None}${NC}"
+    echo -e "  - Allowed UDP Ports:    ${GREEN}${UDP_IN:-None}${NC}"
+    echo -e "  - UDP Port Ranges:     ${GREEN}${UDP_PORT_RANGES:-None}${NC}"
+    echo -e "  - Whitelisted IPs:     ${YELLOW}${WHITELIST_IPS:-None}${NC}"
+    echo -e "  - Blacklisted IPs:     ${RED}${BLACKLIST_IPS:-None}${NC}"
 
     echo -e "\n${BOLD}Active IPTables Chains & Rules:${NC}"
-    iptables -L UG_INPUT -v -n --line-numbers 2>/dev/null | head -n 30
+    iptables -L UG_INPUT -v -n --line-numbers 2>/dev/null | head -n 35
     echo ""
 }
 
-# Allow a Port dynamically
+# Allow a Port
 allow_port() {
     check_root
     load_config
@@ -331,41 +361,42 @@ allow_port() {
 
     if [ -z "$spec" ]; then
         echo -e "${RED}[ERROR] Usage: uniqueguard allow <port/proto>${NC}"
-        echo -e "Example: uniqueguard allow 25565/udp or uniqueguard allow 8080/tcp"
+        echo -e "Example: uniqueguard allow 25565/udp"
         exit 1
     fi
 
     local port="${spec%/*}"
     local proto="${spec#*/}"
     proto=$(echo "$proto" | tr '[:upper:]' '[:lower:]')
-
-    if [ "$proto" != "tcp" ] && [ "$proto" != "udp" ]; then
-        proto="tcp"
-    fi
+    [ "$proto" != "tcp" ] && [ "$proto" != "udp" ] && proto="tcp"
 
     echo -e "${BLUE}[*] Allowing port $port ($proto)...${NC}"
     iptables -I UG_INPUT 1 -p "$proto" --dport "$port" -j ACCEPT
     save_rules
 
-    echo -e "${GREEN}[SUCCESS] Port $port/$proto is now allowed!${NC}"
+    # Persist in config file
+    if [ "$proto" = "tcp" ]; then
+        sed -i "s/TCP_IN=\"/TCP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+    else
+        sed -i "s/UDP_IN=\"/UDP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+    fi
+
+    echo -e "${GREEN}[SUCCESS] Port $port/$proto allowed successfully!${NC}"
 }
 
 # Deny a Port
 deny_port() {
     check_root
-    load_config
     local spec="$1"
 
     if [ -z "$spec" ]; then
         echo -e "${RED}[ERROR] Usage: uniqueguard deny <port/proto>${NC}"
-        echo -e "Example: uniqueguard deny 8080/tcp${NC}"
         exit 1
     fi
 
     local port="${spec%/*}"
     local proto="${spec#*/}"
     proto=$(echo "$proto" | tr '[:upper:]' '[:lower:]')
-
     [ "$proto" != "tcp" ] && [ "$proto" != "udp" ] && proto="tcp"
 
     echo -e "${YELLOW}[*] Removing allowed port rule for $port ($proto)...${NC}"
@@ -375,24 +406,25 @@ deny_port() {
     echo -e "${GREEN}[SUCCESS] Port $port/$proto rule removed.${NC}"
 }
 
-# Block an IP address
+# Block an IP
 block_ip() {
     check_root
     local ip="$1"
 
     if [ -z "$ip" ]; then
         echo -e "${RED}[ERROR] Usage: uniqueguard block <IP>${NC}"
-        echo -e "Example: uniqueguard block 192.168.1.100${NC}"
         exit 1
     fi
 
     echo -e "${RED}[*] Blocking IP address $ip...${NC}"
     iptables -I UG_INPUT 1 -s "$ip" -j DROP
     save_rules
+    send_discord_alert "IP Blocked" "IP Address \`${ip}\` was blocked." "15158332"
+
     echo -e "${GREEN}[SUCCESS] IP $ip has been blocked.${NC}"
 }
 
-# Unblock an IP address
+# Unblock an IP
 unblock_ip() {
     check_root
     local ip="$1"
@@ -405,64 +437,235 @@ unblock_ip() {
     echo -e "${YELLOW}[*] Unblocking IP address $ip...${NC}"
     iptables -D UG_INPUT -s "$ip" -j DROP 2>/dev/null
     save_rules
+
     echo -e "${GREEN}[SUCCESS] IP $ip has been unblocked.${NC}"
 }
 
-# Interactive Pterodactyl setup helper
+# Apply Pre-built Service Profiles
+apply_profile() {
+    check_root
+    load_config
+    local profile="$1"
+
+    if [ -z "$profile" ]; then
+        echo -e "${RED}[ERROR] Usage: uniqueguard profile <name>${NC}"
+        echo -e "Available profiles: ${YELLOW}minecraft, rust, fivem, samp, csgo, web, database${NC}"
+        exit 1
+    fi
+
+    case "$profile" in
+        minecraft)
+            echo -e "${BLUE}[*] Applying Minecraft Profile (25565/tcp, 25565/udp, 25575/tcp RCON, 8123/tcp Dynmap)...${NC}"
+            allow_port "25565/tcp"
+            allow_port "25565/udp"
+            allow_port "25575/tcp"
+            allow_port "8123/tcp"
+            ;;
+        rust)
+            echo -e "${BLUE}[*] Applying Rust Server Profile (28015/udp, 28016/tcp RCON, 28082/tcp App)...${NC}"
+            allow_port "28015/udp"
+            allow_port "28016/tcp"
+            allow_port "28082/tcp"
+            ;;
+        fivem)
+            echo -e "${BLUE}[*] Applying FiveM Profile (30120/tcp, 30120/udp, 40120/tcp txAdmin)...${NC}"
+            allow_port "30120/tcp"
+            allow_port "30120/udp"
+            allow_port "40120/tcp"
+            ;;
+        samp)
+            echo -e "${BLUE}[*] Applying SA-MP Profile (7777/udp)...${NC}"
+            allow_port "7777/udp"
+            ;;
+        csgo|cs2)
+            echo -e "${BLUE}[*] Applying CS:GO / CS2 Profile (27015/tcp, 27015/udp, 27020/udp GOTV)...${NC}"
+            allow_port "27015/tcp"
+            allow_port "27015/udp"
+            allow_port "27020/udp"
+            ;;
+        web)
+            echo -e "${BLUE}[*] Applying Web Server Profile (80/tcp HTTP, 443/tcp HTTPS)...${NC}"
+            allow_port "80/tcp"
+            allow_port "443/tcp"
+            ;;
+        database)
+            echo -e "${BLUE}[*] Applying Database Profile (3306/tcp MySQL, 5432/tcp Postgres, 6379/tcp Redis)...${NC}"
+            allow_port "3306/tcp"
+            allow_port "5432/tcp"
+            allow_port "6379/tcp"
+            ;;
+        *)
+            echo -e "${RED}[ERROR] Unknown profile: $profile${NC}"
+            echo -e "Available profiles: minecraft, rust, fivem, samp, csgo, web, database"
+            exit 1
+            ;;
+    esac
+}
+
+# Live Network & Attack Monitor
+monitor_network() {
+    check_root
+    echo -e "${CYAN}${BOLD}=== UNIQUE GUARD Live Network & Attack Monitor ===${NC}"
+    echo -e "Press ${YELLOW}Ctrl+C${NC} to exit.\n"
+
+    while true; do
+        clear
+        print_banner
+        echo -e "${BOLD}Active Connections Summary:${NC}"
+        ss -s 2>/dev/null || netstat -sw 2>/dev/null
+        echo -e "\n${BOLD}Top 10 Connecting IPs:${NC}"
+        ss -ntu 2>/dev/null | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -nr | head -n 10
+        echo -e "\n${BOLD}Recent Dropped Attack Packets (Last 5):${NC}"
+        if command -v journalctl &>/dev/null; then
+            journalctl -k | grep "UNIQUE-GUARD-DROP" | tail -n 5
+        else
+            dmesg | grep "UNIQUE-GUARD-DROP" | tail -n 5
+        fi
+        sleep 3
+    done
+}
+
+# Security Audit Tool
+security_audit() {
+    print_banner
+    check_root
+    load_config
+
+    echo -e "${CYAN}${BOLD}=== UNIQUE GUARD VPS/VDS Security Audit Report ===${NC}\n"
+    local score=100
+
+    # 1. Firewall active check
+    if iptables -C INPUT -j UG_INPUT 2>/dev/null; then
+        echo -e "  [✓] UNIQUE GUARD Firewall: ${GREEN}Active (+30 pts)${NC}"
+    else
+        echo -e "  [✗] UNIQUE GUARD Firewall: ${RED}Inactive (-30 pts)${NC}"
+        score=$((score - 30))
+    fi
+
+    # 2. Anti-DDoS check
+    if [ "$ENABLE_ANTI_DDOS" = "true" ]; then
+        echo -e "  [✓] Anti-DDoS Engine: ${GREEN}Enabled (+20 pts)${NC}"
+    else
+        echo -e "  [✗] Anti-DDoS Engine: ${RED}Disabled (-20 pts)${NC}"
+        score=$((score - 20))
+    fi
+
+    # 3. Pterodactyl mode check
+    if [ "$PTERODACTYL_MODE" = "true" ]; then
+        echo -e "  [✓] Pterodactyl Container Isolation: ${GREEN}Active (+20 pts)${NC}"
+    else
+        echo -e "  [!] Pterodactyl Mode: ${YELLOW}Disabled${NC}"
+    fi
+
+    # 4. Fail2ban check
+    if systemctl is-active fail2ban &>/dev/null; then
+        echo -e "  [✓] Fail2ban SSH/Panel Defense: ${GREEN}Active (+15 pts)${NC}"
+    else
+        echo -e "  [✗] Fail2ban Defense: ${RED}Not Running (-15 pts)${NC}"
+        score=$((score - 15))
+    fi
+
+    # 5. Default Policy check
+    if [ "$DEFAULT_INPUT_POLICY" = "DROP" ]; then
+        echo -e "  [✓] Default INPUT Policy: ${GREEN}DROP (+15 pts)${NC}"
+    else
+        echo -e "  [✗] Default INPUT Policy: ${RED}ACCEPT (-15 pts)${NC}"
+        score=$((score - 15))
+    fi
+
+    echo -e "\n${BOLD}Final Security Audit Score: ${score}/100${NC}"
+    if [ "$score" -ge 80 ]; then
+        echo -e "Status: ${GREEN}${BOLD}EXCELLENT HARDENING${NC}\n"
+    elif [ "$score" -ge 50 ]; then
+        echo -e "Status: ${YELLOW}${BOLD}MODERATE SECURITY (Action Required)${NC}\n"
+    else
+        echo -e "Status: ${RED}${BOLD}CRITICAL VULNERABILITY RISK${NC}\n"
+    fi
+}
+
+# Backup & Restore Logic
+backup_rules() {
+    check_root
+    load_config
+    local backup_dir="${BACKUP_DIR:-/var/backups/uniqueguard}"
+    mkdir -p "$backup_dir"
+    local timestamp=$(date +'%Y%m%d_%H%M%S')
+    local file="${backup_dir}/uniqueguard_backup_${timestamp}.tar.gz"
+
+    tar -czf "$file" "$CONFIG_FILE" /etc/systemd/system/uniqueguard.service 2>/dev/null || true
+    echo -e "${GREEN}[SUCCESS] Backup saved to ${file}${NC}"
+}
+
+restore_rules() {
+    check_root
+    local file="$1"
+    if [ -z "$file" ] || [ ! -f "$file" ]; then
+        echo -e "${RED}[ERROR] Usage: uniqueguard restore <path-to-backup.tar.gz>${NC}"
+        exit 1
+    fi
+    tar -xzf "$file" -C / 2>/dev/null
+    echo -e "${GREEN}[SUCCESS] Configuration restored from ${file}${NC}"
+    start_firewall
+}
+
+# Interactive Pterodactyl Setup
 setup_pterodactyl() {
     print_banner
     check_root
     load_config
 
-    echo -e "${CYAN}${BOLD}=== UniqueGuard Pterodactyl Auto-Configuration Wizard ===${NC}\n"
-    echo -e "This wizard ensures your Pterodactyl Panel and Wings node remain 100% operational."
-    echo -e "It will open Panel HTTP (80/443), Wings API (8080), SFTP (2022), and Docker bridge networks.\n"
+    echo -e "${CYAN}${BOLD}=== UNIQUE GUARD Pterodactyl Auto-Configuration Wizard ===${NC}\n"
+    echo -e "This wizard configures complete protection for Pterodactyl Panel & Wings nodes."
+    echo -e "It opens Web Panel (80/443), Wings API (8080), Wings SFTP (2022), and game bridges.\n"
 
-    # Enable Pterodactyl mode in config if not enabled
     sed -i 's/PTERODACTYL_MODE=".*"/PTERODACTYL_MODE="true"/' "$CONFIG_FILE" 2>/dev/null
 
-    # Prompt user for Game Port range
     read -rp "Enter Game Allocation Port Range (Default: 25565:25600 27015:27050): " user_ranges
     if [ -n "$user_ranges" ]; then
         sed -i "s/UDP_PORT_RANGES=\".*\"/UDP_PORT_RANGES=\"$user_ranges\"/" "$CONFIG_FILE" 2>/dev/null
         sed -i "s/TCP_PORT_RANGES=\".*\"/TCP_PORT_RANGES=\"$user_ranges\"/" "$CONFIG_FILE" 2>/dev/null
     fi
 
-    echo -e "\n${GREEN}[+] Pterodactyl settings saved to config.${NC}"
-    echo -e "${BLUE}[*] Restarting UniqueGuard firewall to apply Pterodactyl rules...${NC}"
+    echo -e "\n${GREEN}[+] Pterodactyl configurations updated.${NC}"
+    echo -e "${BLUE}[*] Restarting UNIQUE GUARD firewall...${NC}"
     start_firewall
 }
 
-# Display Firewall Logs
+# View Logs
 show_logs() {
     check_root
-    echo -e "${CYAN}${BOLD}=== Recent UniqueGuard Dropped Packet Logs ===${NC}\n"
+    echo -e "${CYAN}${BOLD}=== Recent UNIQUE GUARD Dropped Packet Logs ===${NC}\n"
     if command -v journalctl &>/dev/null; then
-        journalctl -k | grep "UniqueGuard-DROP" | tail -n 25
+        journalctl -k | grep "UNIQUE-GUARD-DROP" | tail -n 30
     else
-        dmesg | grep "UniqueGuard-DROP" | tail -n 25
+        dmesg | grep "UNIQUE-GUARD-DROP" | tail -n 30
     fi
 }
 
-# Help Menu
+# Display Help
 show_help() {
     print_banner
     echo -e "${BOLD}Usage:${NC} uniqueguard [command] [options]\n"
-    echo -e "${BOLD}Available Commands:${NC}"
-    echo -e "  ${GREEN}start${NC}                Start & apply firewall and Anti-DDoS rules"
-    echo -e "  ${GREEN}stop${NC}                 Stop firewall and restore open network policies"
-    echo -e "  ${GREEN}restart | reload${NC}     Reload firewall rules from config file"
-    echo -e "  ${GREEN}status${NC}               Display active firewall status and statistics"
-    echo -e "  ${GREEN}allow <port/proto>${NC}   Allow a specific port (e.g., 25565/udp, 8080/tcp)"
-    echo -e "  ${GREEN}deny <port/proto>${NC}    Remove allowed rule for a port"
-    echo -e "  ${GREEN}block <IP>${NC}           Immediately block an IP address"
-    echo -e "  ${GREEN}unblock <IP>${NC}         Remove IP from blacklist"
-    echo -e "  ${GREEN}setup-pterodactyl${NC}    Run automated Pterodactyl Panel/Wings wizard"
-    echo -e "  ${GREEN}logs${NC}                 View recent dropped connection logs"
-    echo -e "  ${GREEN}help${NC}                 Show this help menu\n"
+    echo -e "${BOLD}Core Commands:${NC}"
+    echo -e "  ${GREEN}start${NC}                  Start & apply firewall and Anti-DDoS rules"
+    echo -e "  ${GREEN}stop${NC}                   Stop firewall and restore open network policies"
+    echo -e "  ${GREEN}restart | reload${NC}       Reload firewall rules from config file"
+    echo -e "  ${GREEN}status${NC}                 Display active firewall status and statistics"
+    echo -e "  ${GREEN}allow <port/proto>${NC}     Allow a specific port (e.g. 25565/udp, 8080/tcp)"
+    echo -e "  ${GREEN}deny <port/proto>${NC}      Remove allowed rule for a port"
+    echo -e "  ${GREEN}block <IP>${NC}             Immediately block an IP address"
+    echo -e "  ${GREEN}unblock <IP>${NC}           Remove IP from blacklist"
+    echo -e "  ${GREEN}profile <name>${NC}         Apply server profiles (minecraft, rust, fivem, csgo, web, database)"
+    echo -e "  ${GREEN}setup-pterodactyl${NC}      Run automated Pterodactyl Panel/Wings wizard"
+    echo -e "  ${GREEN}monitor${NC}                Launch real-time connection & attack dashboard"
+    echo -e "  ${GREEN}audit${NC}                  Run VPS security audit & hardening report"
+    echo -e "  ${GREEN}backup${NC}                 Backup firewall configuration"
+    echo -e "  ${GREEN}restore <file>${NC}         Restore firewall configuration from backup archive"
+    echo -e "  ${GREEN}logs${NC}                   View recent dropped attack connection logs"
+    echo -e "  ${GREEN}help${NC}                   Show this menu\n"
 }
 
-# Main Command Router
+# Router
 case "$1" in
     start)
         start_firewall
@@ -487,6 +690,21 @@ case "$1" in
         ;;
     unblock)
         unblock_ip "$2"
+        ;;
+    profile)
+        apply_profile "$2"
+        ;;
+    monitor)
+        monitor_network
+        ;;
+    audit)
+        security_audit
+        ;;
+    backup)
+        backup_rules
+        ;;
+    restore)
+        restore_rules "$2"
         ;;
     setup-pterodactyl)
         setup_pterodactyl
