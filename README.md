@@ -105,12 +105,12 @@ Run the following one-line command as `root` on your VPS or VDS:
 
 ### Using `curl`:
 ```bash
-curl -sSL https://raw.githubusercontent.com/mr-unique/UniqueGuard/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/OG-Mahshook/UniqueGuard-/main/install.sh | bash
 ```
 
 ### Using `wget`:
 ```bash
-wget -qO- https://raw.githubusercontent.com/mr-unique/UniqueGuard/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/OG-Mahshook/UniqueGuard-/main/install.sh | bash
 ```
 
 ---
