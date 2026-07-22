@@ -3,7 +3,7 @@
 # UNIQUE GUARD - Advanced VPS/VDS Firewall & Anti-DDoS Engine
 # Author & Copyright: mr-unique
 # License: MIT
-# Version: 1.2.0
+# Version: 1.2.1
 # =====================================================================
 
 CONFIG_FILE="/etc/uniqueguard/uniqueguard.conf"
@@ -167,34 +167,7 @@ start_firewall() {
         done
     fi
 
-    # 8. Anti-DDoS Mitigations
-    if [ "$ENABLE_ANTI_DDOS" = "true" ]; then
-        echo -e "${YELLOW}  [+] Applying Anti-DDoS Defenses...${NC}"
-
-        # TCP SYN Flood Defense
-        if [ "$SYN_FLOOD_PROTECTION" = "true" ]; then
-            iptables -A UG_INPUT -p tcp --syn -m limit --limit "${SYN_FLOOD_LIMIT:-25/s}" --limit-burst "${SYN_FLOOD_BURST:-50}" -j ACCEPT
-            iptables -A UG_INPUT -p tcp --syn -j DROP
-        fi
-
-        # UDP Flood Mitigation
-        if [ "$UDP_FLOOD_PROTECTION" = "true" ]; then
-            iptables -A UG_INPUT -p udp -m limit --limit "${UDP_FLOOD_LIMIT:-60/s}" --limit-burst "${UDP_FLOOD_BURST:-120}" -j ACCEPT
-        fi
-
-        # Ping / ICMP Flood Protection
-        if [ "$PING_FLOOD_PROTECTION" = "true" ]; then
-            iptables -A UG_INPUT -p icmp --icmp-type echo-request -m limit --limit "${PING_LIMIT:-5/s}" --limit-burst "${PING_BURST:-10}" -j ACCEPT
-            iptables -A UG_INPUT -p icmp --icmp-type echo-request -j DROP
-        fi
-
-        # Limit Concurrent Connections Per IP
-        if [ -n "$MAX_CONN_PER_IP" ] && [ "$MAX_CONN_PER_IP" -gt 0 ]; then
-            iptables -A UG_INPUT -p tcp --syn -m connlimit --connlimit-above "$MAX_CONN_PER_IP" --connlimit-mask 32 -j DROP
-        fi
-    fi
-
-    # 9. Pterodactyl Panel & Wings Integration
+    # 8. Pterodactyl Panel & Wings Integration
     if [ "$PTERODACTYL_MODE" = "true" ]; then
         echo -e "${CYAN}  [+] Pterodactyl Auto-Shield Engine Active:${NC}"
         
@@ -243,7 +216,7 @@ start_firewall() {
         fi
     fi
 
-    # 10. Open Configured Ports (TCP_IN & UDP_IN)
+    # 9. Open Configured Ports (TCP_IN & UDP_IN)
     if [ -n "$TCP_IN" ]; then
         echo -e "${YELLOW}  [+] Opening Standard TCP Ports: $TCP_IN...${NC}"
         IFS=',' read -ra T_PORTS <<< "$TCP_IN"
@@ -262,7 +235,7 @@ start_firewall() {
         done
     fi
 
-    # 11. Open Port Ranges
+    # 10. Open Port Ranges
     if [ -n "$TCP_PORT_RANGES" ]; then
         echo -e "${YELLOW}  [+] Opening TCP Port Ranges: $TCP_PORT_RANGES...${NC}"
         for range in $TCP_PORT_RANGES; do
@@ -275,6 +248,33 @@ start_firewall() {
         for range in $UDP_PORT_RANGES; do
             iptables -A UG_INPUT -p udp --dport "$range" -j ACCEPT
         done
+    fi
+
+    # 11. Anti-DDoS Mitigations (Applied to remaining connection attempts)
+    if [ "$ENABLE_ANTI_DDOS" = "true" ]; then
+        echo -e "${YELLOW}  [+] Applying Anti-DDoS Defenses...${NC}"
+
+        # TCP SYN Flood Defense
+        if [ "$SYN_FLOOD_PROTECTION" = "true" ]; then
+            iptables -A UG_INPUT -p tcp --syn -m limit --limit "${SYN_FLOOD_LIMIT:-25/s}" --limit-burst "${SYN_FLOOD_BURST:-50}" -j ACCEPT
+            iptables -A UG_INPUT -p tcp --syn -j DROP
+        fi
+
+        # UDP Flood Mitigation
+        if [ "$UDP_FLOOD_PROTECTION" = "true" ]; then
+            iptables -A UG_INPUT -p udp -m limit --limit "${UDP_FLOOD_LIMIT:-60/s}" --limit-burst "${UDP_FLOOD_BURST:-120}" -j ACCEPT
+        fi
+
+        # Ping / ICMP Flood Protection
+        if [ "$PING_FLOOD_PROTECTION" = "true" ]; then
+            iptables -A UG_INPUT -p icmp --icmp-type echo-request -m limit --limit "${PING_LIMIT:-5/s}" --limit-burst "${PING_BURST:-10}" -j ACCEPT
+            iptables -A UG_INPUT -p icmp --icmp-type echo-request -j DROP
+        fi
+
+        # Limit Concurrent Connections Per IP
+        if [ -n "$MAX_CONN_PER_IP" ] && [ "$MAX_CONN_PER_IP" -gt 0 ]; then
+            iptables -A UG_INPUT -p tcp --syn -m connlimit --connlimit-above "$MAX_CONN_PER_IP" --connlimit-mask 32 -j DROP
+        fi
     fi
 
     # 12. Logging Dropped Packets
@@ -376,9 +376,13 @@ allow_port() {
 
     # Persist in config file
     if [ "$proto" = "tcp" ]; then
-        sed -i "s/TCP_IN=\"/TCP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+        if ! grep -q "$port" "$CONFIG_FILE"; then
+            sed -i "s/TCP_IN=\"/TCP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+        fi
     else
-        sed -i "s/UDP_IN=\"/UDP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+        if ! grep -q "$port" "$CONFIG_FILE"; then
+            sed -i "s/UDP_IN=\"/UDP_IN=\"$port,/g" "$CONFIG_FILE" 2>/dev/null || true
+        fi
     fi
 
     echo -e "${GREEN}[SUCCESS] Port $port/$proto allowed successfully!${NC}"
