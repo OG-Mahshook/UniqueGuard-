@@ -1,0 +1,15 @@
+[Unit]
+Description=UniqueGuard VPS/VDS Firewall & Anti-DDoS Protection Service
+Documentation=https://github.com/mr-unique/UniqueGuard
+After=network.target network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/uniqueguard start
+ExecStop=/usr/local/bin/uniqueguard stop
+ExecReload=/usr/local/bin/uniqueguard reload
+
+[Install]
+WantedBy=multi-user.target
